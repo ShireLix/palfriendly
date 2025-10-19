@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Memóriajáték - Képes verzió</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Brush Script MT', cursive;
+            -webkit-animation: glow 1s ease-in-out infinite alternate;
+            -moz-animation: glow 1s ease-in-out infinite alternate;
+            animation: glow 1s ease-in-out infinite alternate;
+            background: #1a1a1a;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: #e0e0e0;
+        }
+
+        @-webkit-keyframes glow {
+            from {
+                text-shadow: 0 0 10px #fff, 0 0 20px #fff, 0 0 30px #e60073, 0 0 40px #e60073, 0 0 50px #e60073, 0 0 60px #e60073, 0 0 70px #e60073;
+            }
+
+            to {
+                text-shadow: 0 0 20px #fff, 0 0 30px #ff4da6, 0 0 40px #ff4da6, 0 0 50px #ff4da6, 0 0 60px #ff4da6, 0 0 70px #ff4da6, 0 0 80px #ff4da6;
+            }
+        }
+
+        .container {
+            max-width: 800px;
+            width: 100%;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin: 0 0 10px;
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .subtitle {
+            font-size: 1.1em;
+            margin-bottom: 40px;
+            color: #a0a0a0;
+        }
+
+        .board {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-top: 20px;
+            max-width: 400px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .card {
+            aspect-ratio: 1;
+            background: #2a2a2a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+
+            .card::before {
+                content: '?';
+                position: absolute;
+                font-size: 2.5em;
+                color: #4a4a4a;
+                font-weight: 600;
+            }
+
+            .card:hover:not(.flipped):not(.matched) {
+                transform: translateY(-3px);
+                box-shadow: 0 6px 12px rgba(0,0,0,0.4);
+            }
+
+            .card img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                display: none;
+            }
+
+        .flipped img,
+        .matched img {
+            display: block;
+        }
+
+        .flipped {
+            background: #3a3a3a;
+            cursor: default;
+        }
+
+            .flipped::before {
+                display: none;
+            }
+
+        .matched {
+            background: #2d5f3f;
+            cursor: default;
+        }
+
+            .matched::before {
+                display: none;
+            }
+
+        .message {
+            margin-top: 30px;
+            font-size: 1.3em;
+            font-weight: 600;
+            min-height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #4a9eff;
+        }
+
+        .reset-btn {
+            margin-top: 20px;
+            padding: 12px 40px;
+            font-size: 1.1em;
+            background: #2a2a2a;
+            border: 1px solid #3a3a3a;
+            border-radius: 8px;
+            color: #e0e0e0;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+
+            .reset-btn:hover {
+                background: #3a3a3a;
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+            }
+
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 2em;
+            }
+
+            .board {
+                gap: 10px;
+            }
+
+            .stat-box {
+                padding: 10px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Pálfriendly</h1>
+        <p class="subtitle">Hajrá, hajrá, hajrá!</p>
+
+        <div class="board" id="board"></div>
+        <div class="message" id="message"></div>
+        <button class="reset-btn" onclick="resetGame()">Új játék</button>
+    </div>
+
+    <script>
+        // 🔹 Képek listája (tedd a képeket az "images" mappába)
+        const images = [
+            'images/dog.jpg',
+            'images/cat.jpg',
+            'images/rabbit.jpg',
+            'images/frog.jpg',
+            'images/panda.jpg',
+            'images/bear.jpg',
+            'images/bird.jpg',
+            'images/pig.jpg'
+        ];
+
+        let cards = [];
+        let first = null, second = null, matched = 0;
+
+        function initGame() {
+            // Párosítás és keverés
+            cards = [...images, ...images].sort(() => 0.5 - Math.random());
+            const board = document.getElementById('board');
+            board.innerHTML = '';
+            matched = 0;
+            first = null;
+            second = null;
+            document.getElementById('message').textContent = '';
+
+            // Kártyák létrehozása
+            cards.forEach((imgSrc, index) => {
+                const div = document.createElement('div');
+                div.className = 'card';
+                div.dataset.image = imgSrc;
+                div.dataset.index = index;
+                const img = document.createElement('img');
+                img.src = imgSrc;
+                div.appendChild(img);
+                div.addEventListener('click', () => flip(div));
+                board.appendChild(div);
+            });
+        }
+
+        function flip(card) {
+            if (card.classList.contains('flipped') || card.classList.contains('matched') || second) return;
+
+            card.classList.add('flipped');
+
+            if (!first) {
+                first = card;
+            } else {
+                second = card;
+
+                if (first.dataset.image === second.dataset.image) {
+                    setTimeout(() => {
+                        first.classList.add('matched');
+                        second.classList.add('matched');
+                        matched++;
+
+                        if (matched === images.length) {
+                            setTimeout(() => {
+                                document.getElementById('message').textContent = 'Gratulálok! Megtaláltad mind a ' + images.length + ' párt!';
+                            }, 300);
+                        }
+                        reset();
+                    }, 400);
+                } else {
+                    setTimeout(() => {
+                        first.classList.remove('flipped');
+                        second.classList.remove('flipped');
+                        reset();
+                    }, 800);
+                }
+            }
+        }
+
+        function reset() {
+            first = null;
+            second = null;
+        }
+
+        function resetGame() {
+            initGame();
+        }
+
+        // Játék indítása
+        initGame();
+    </script>
+</body>
+</html>
