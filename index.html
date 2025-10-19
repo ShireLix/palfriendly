@@ -179,7 +179,6 @@
     </div>
 
     <script>
-        // 🔹 Képek listája (tedd a képeket az "images" mappába)
         const images = [
             'images/dog.jpg',
             'images/cat.jpg',
@@ -195,7 +194,6 @@
         let first = null, second = null, matched = 0;
 
         function initGame() {
-            // Párosítás és keverés
             cards = [...images, ...images].sort(() => 0.5 - Math.random());
             const board = document.getElementById('board');
             board.innerHTML = '';
@@ -204,7 +202,6 @@
             second = null;
             document.getElementById('message').textContent = '';
 
-            // Kártyák létrehozása
             cards.forEach((imgSrc, index) => {
                 const div = document.createElement('div');
                 div.className = 'card';
@@ -260,8 +257,8 @@
             initGame();
         }
 
-        // Játék indítása
         initGame();
     </script>
 </body>
+
 </html>
